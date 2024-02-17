@@ -35,7 +35,7 @@ data = np.array([
     [9.97, 9.95, 10.01, 10.00, 10.02],
     [9.99, 10.00, 9.98, 10.03, 10.01],
     [10.01, 9.99, 10.02, 9.98, 10.00],
-    [9.7, 10.00, 9.96, 10.01, 10.02],
+    [10.01, 10.00, 9.96, 10.01, 10.02],
     [10.02, 9.99, 10.03, 9.97, 10.01],
     [10.00, 10.01, 10.00, 10.02, 10.03],
     [9.97, 10.02, 10.01, 10.00, 10.04]
@@ -91,9 +91,9 @@ def xbar(data):
     means=np.mean(data,axis=1)
     #now we have means for each subgroup as the Y and the subgroup number as the X.
     #we need a vector to represent the subgroup number across the x axis.
-    sx=np.linspace(1,20,20)
+    sx=np.linspace(1,sn,sn)
     #we also need to calculate the grand average, or the center line.
-    xbcl=np.sum(data)/(np.size(data))
+    xbarr=np.sum(data)/(np.size(data))
     #we will then plot all of the values onto the Xbar chart
     plt.plot(sx,means,marker='o')
     c=1
@@ -109,11 +109,127 @@ def xbar(data):
     plt.axhline(y=lsl,color='r')
     plt.text(sn+1.2,usl-.002, f'UCL= {usl}',color='r', fontsize=12)
     plt.text(sn+1.2,lsl-.002, f'LCL= {lsl}',color='r', fontsize=12)
-    plt.axhline(y=xbcl,color='g')
-    plt.text(sn+1.2,xbcl-.002, r'$\overline{\overline{x}}$' + f' = {np.round(xbcl,3)}', fontsize=12)
+    plt.axhline(y=xbarr,color='g')
+    plt.text(sn+1.2,xbarr-.002, r'$\overline{\overline{x}}$' + f' = {np.round(xbarr,3)}', fontsize=12)
     plt.ylabel('Sample Mean',fontsize=12)
     plt.title('Xbar Chart',fontsize=14)
+    return sn,ss,sx
     
+## R Bar Chart
+#data has already been characterized
+#now ranges will be calculated for each subgroup.
+def rbar(data):
+    sn,ss=np.shape(data)
+    sx=np.linspace(1,sn,sn)
+    sx=sx.astype(int)
+    ranges = [np.ptp(row) for row in data]
+    std_devm=np.std(ranges)
+    #we also need to calculate the correct control limits.
+    #to do so, we need to incorporate the usage of control constants based upon subgroup size.
+    #we already know subgroup size.
+    if ss==2:
+        a2=1.88
+        d3=0
+        d4-3.267
+    if ss==3:
+        a2=1.023
+        d3=0
+        d4=2.574
+    if ss==4:
+        a2=.729
+        d3=0
+        d4=2.282
+    if ss==5:
+        a2=.577
+        d3=0
+        d4=2.004
+    if ss==6:
+        a2=.483
+        d3=0
+        d4=2.004
+    if ss==7:
+        a2=.419
+        d3=.076
+        d4=1.924
+    if ss==8:
+        a2=.373
+        d3=.136
+        d4=1.864
+    if ss==9:
+        a2=.337
+        d3=.184
+        d4=1.816
+    if ss==10:
+        a2=.308
+        d3=.223
+        d4=1.777
+    if ss==15:
+        a2=.223
+        d3=.347
+        d4=1.653
+    if ss==25:
+        a2=.153
+        d3=.459
+        d4=1.541
+    #now we can calculate the ucl and lcl for the R chart
+    rbar=np.sum(ranges)/np.size(ranges)
+    uclr=d4*rbar
+    lclr=d3*rbar
+    plt.plot(sx,ranges,marker='o')
+    plt.ylim(-.01,np.max(ranges)+std_devm)
+    plt.xticks(sx,sx)
+    plt.axhline(uclr,color='r')
+    plt.axhline(lclr,color='r')
+    plt.axhline(rbar,color='g')
+    c=1
+    #to further distinguish subgroups that are out of control, we will indicate these as a red dot
+    for i in ranges:
+        if i>=uclr or i<=lclr:
+            plt.plot(c,i,marker='o',color='r')
+        c+=1
+    plt.title('R Chart',fontsize=14)
+    plt.ylabel('Sample Range',fontsize=12)
+
+#Subgroup Plotting
+#we just need to plot a scatter for this one.
+def last(data):
+    sn,ss=np.shape(data)
+    sx=np.linspace(1,sn,sn)
+    sx=sx.astype(int)
+    c=0
+    while c<sn:
+        for i in data[c,:]:
+            plt.scatter(c+1,i,color='b',marker='+')
+        c+=1
+        if c==sn:
+            break
+    plt.xticks(sx)
+    plt.yticks([np.round(np.mean(data)-std_dev*3,2),np.round(np.mean(data)+std_dev*3,2)])
+    plt.ylim(np.min(data-std_dev*3),np.max(data+std_dev*3))
+    plt.axhline(np.mean(data),linestyle='--',alpha=.5)
+    plt.gca().set_aspect(40)
+    plt.title(f'Last {sn}' +' Subgroups',fontsize=14)
+    plt.ylabel('Values',fontsize=12)
+    plt.xlabel('Sample',fontsize=12)
+
+#Probability Plot
+#each probability is calculated indexwise.
+#first sort data
+sn,ss=np.shape(data)
+sx=np.linspace(1,sn,sn)
+sx=sx.astype(int)
+
+
+fdata = data.flatten()
+sdata = np.sort(fdata)
+pr = (np.arange(len(sdata)) + 0.5) / len(sdata)
+
+    
+plt.scatter(sdata, pr)
+plt.ylabel('Ordered Values')
+plt.title('Normal Probability Plot')
+plt.grid(True)
+plt.show()
 
 
 
