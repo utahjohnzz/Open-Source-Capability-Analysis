@@ -8,38 +8,52 @@ Created on Sun Feb 11 19:29:11 2024
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import norm
-"""
-#example data from https://www.youtube.com/watch?v=XamSx8-_YkY
-data=np.array([[42.1192,1],[41.7019,1],[41.6807,1],[40.5069,1],[40.0526,1],
-              [40.8287,2],[42.5247,2],[40.6677,2],[43.1877,2],[39.6767,2],
-              [37.9661,3], [38.5851,3],[38.1810,3],[40.2117,3],[40.7411,3],
-              [41.3868,4],[41.7186,4],[40.3899,4],[41.0318,4],[40.4632,4],
-              [42.6131,5],[42.5393,5],[40.6707,5],[42.8325,5],[43.8950,5],
-              [41.3969,6],[42.1910,6],[39.0856,6],[43.4202,6],[39.7731,6]])
 
-datah=data[:,0]
+#####################################
+#Generated Data
+#####################################
+
+"""
+20 subgroups of 5 data points each.
 
 """
 
-#####################################
-#Generate Data
-#####################################
-
+data = np.array([
+    [9.95, 9.97, 9.96, 10.02, 9.98],
+    [10.03, 10.01, 9.99, 10.00, 10.04],
+    [10.05, 9.96, 9.94, 10.03, 10.01],
+    [10.02, 10.07, 10.00, 10.01, 9.99],
+    [10.00, 10.01, 9.98, 10.03, 10.02],
+    [10.02, 9.98, 10.00, 10.01, 9.99],
+    [9.96, 9.97, 10.01, 10.02, 10.03],
+    [10.01, 10.00, 9.98, 10.04, 9.99],
+    [10.00, 9.98, 10.03, 9.97, 10.01],
+    [10.03, 10.05, 9.98, 10.00, 10.02],
+    [10.01, 9.99, 10.03, 9.95, 10.00],
+    [10.00, 10.01, 10.02, 9.99, 9.97],
+    [10.02, 10.03, 10.01, 9.98, 9.99],
+    [9.97, 9.95, 10.01, 10.00, 10.02],
+    [9.99, 10.00, 9.98, 10.03, 10.01],
+    [10.01, 9.99, 10.02, 9.98, 10.00],
+    [9.7, 10.00, 9.96, 10.01, 10.02],
+    [10.02, 9.99, 10.03, 9.97, 10.01],
+    [10.00, 10.01, 10.00, 10.02, 10.03],
+    [9.97, 10.02, 10.01, 10.00, 10.04]
+])
 
 #norm prob data
 #upper limit
-usl=39
+usl=10.05
 #lower limit
-lsl=43
+lsl=9.95
 #calc mean for example data based on usl,lsl
 mean = (usl + lsl) / 2  
 std_dev = (usl - lsl) / 6
 #distributes data into a normal distribution
 datah = np.random.normal(loc=mean, scale=std_dev, size=1000)
 
-
 #function for calling
-def hist(data,usl,lsl):
+def hist(datah,usl,lsl):
     #############Histogram
     #plots histogram
     plt.hist(datah, bins=30, density=True, alpha=0.6, color='blue', edgecolor='black')
@@ -60,10 +74,46 @@ def hist(data,usl,lsl):
     plt.show()
     
 
+
+
 #hist(datah,usl,lsl)
 
 
 #####################################
 #Xbar
 #####################################
+
+def xbar(data):
+    #first we need to assess the amount of subgroups when given random data from user input.
+    #sn is subgroup number, ss is subgroup size.
+    sn,ss=np.shape(data)
+    #for each subgroup we need to collect the sample mean in the group.
+    means=np.mean(data,axis=1)
+    #now we have means for each subgroup as the Y and the subgroup number as the X.
+    #we need a vector to represent the subgroup number across the x axis.
+    sx=np.linspace(1,20,20)
+    #we also need to calculate the grand average, or the center line.
+    xbcl=np.sum(data)/(np.size(data))
+    #we will then plot all of the values onto the Xbar chart
+    plt.plot(sx,means,marker='o')
+    c=1
+    #to further distinguish subgroups that are out of control, we will indicate these as a red dot
+    for i in means:
+        if i>=usl or i<=lsl:
+            plt.plot(c,i,marker='o',color='r')
+        c+=1
+        
+    #the next following lines are for adding text onto the plot to distinguish the line meanings.
+    plt.ylim(lsl-std_dev,usl+std_dev)
+    plt.axhline(y=usl,color='r')
+    plt.axhline(y=lsl,color='r')
+    plt.text(sn+1.2,usl-.002, f'UCL= {usl}',color='r', fontsize=12)
+    plt.text(sn+1.2,lsl-.002, f'LCL= {lsl}',color='r', fontsize=12)
+    plt.axhline(y=xbcl,color='g')
+    plt.text(sn+1.2,xbcl-.002, r'$\overline{\overline{x}}$' + f' = {np.round(xbcl,3)}', fontsize=12)
+    plt.ylabel('Sample Mean',fontsize=12)
+    plt.title('Xbar Chart',fontsize=14)
+    
+
+
 
