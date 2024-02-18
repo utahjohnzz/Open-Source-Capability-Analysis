@@ -1,108 +1,128 @@
 import tkinter as tk
-from tkinter import ttk
-import numpy as np
-import matplotlib.pyplot as plt
+from tkinter import messagebox
+from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
+import scipy.stats as stats
 
-def plot_histogram(data,lsl,usl):
-    
-    data = [float(value) for value in data]
-    
-    
-    fig, ax = plt.subplots()
-    ax.hist(data, bins=30, alpha=0.5, color='blue', edgecolor='black')
+def plot_histogram(data, usl, lsl, canvas):
+    fig = Figure(figsize=(5, 4), dpi=100)
+    ax = fig.add_subplot(111)
+    ax.hist(data, bins=30, density=True, alpha=0.6, color='blue', edgecolor='black')
+    ax.axvline(x=usl, color='red', linestyle='--', linewidth=2)
+    ax.text(usl, ax.get_ylim()[1], f'USL= {usl}', fontsize=12, color='r')
+    ax.axvline(x=lsl, color='red', linestyle='--', linewidth=2)
+    ax.text(lsl, ax.get_ylim()[1], f'LSL= {lsl}', fontsize=12, color='r')
     ax.set_xlabel('Value')
     ax.set_ylabel('Frequency')
-    plt.axvline(x=usl, color='red', linestyle='--', linewidth=2)
-    plt.text(usl,plt.gca().get_ylim()[1], f'USL= {usl}', fontsize=12, color='r')
-    plt.axvline(x=lsl, color='red', linestyle='--', linewidth=2)
-    plt.text(lsl,plt.gca().get_ylim()[1], f'LSL= {lsl}', fontsize=12, color='r')
-    
-    
-    # Add a normal line
-    mu, std = np.mean(data), np.std(data)
-    xmin, xmax = min(data), max(data)
-    x = np.linspace(xmin, xmax, 100)
-    p = (1/(std * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu)/std)**2)
-    ax.plot(x, p, 'k', linewidth=2)
-    
-    return fig
+    canvas.draw()
 
-def get_nvalue():
-    global N, usl, lsl
-    N = float(entry_nvalue.get())
-    usl = float(entry_usl.get())
-    lsl = float(entry_lsl.get())
-    root.destroy()  
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    data_window = tk.Tk()
-    data_window.title("Data Input")
-    
-    
-    frame = ttk.Frame(data_window)
-    frame.pack(expand=True, fill=tk.BOTH, padx=20, pady=10)
-    
-    
-    
-    
-    
-    
-    
-    ttk.Label(frame, text="Paste {}x1 array data:".format(N)).pack()
-    data_input = tk.Text(frame, height=10, width=20)
-    data_input.pack(side=tk.LEFT, padx=5)
-    
-    def get_data():
-        
-        data = data_input.get("1.0", tk.END).strip().split("\n")
-        
-        fig = plot_histogram(data,lsl,usl)
-        
-        canvas = FigureCanvasTkAgg(fig, master=frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.RIGHT, padx=5)
-    
-    ttk.Button(data_window, text="Get Data", command=get_data).pack()
-    
-    data_window.mainloop()
+def plot_xbar_chart(data, canvas):
+    fig = Figure(figsize=(5, 4), dpi=100)
+    ax = fig.add_subplot(111)
+    sn, ss = np.array(data).shape  # Convert data to numpy array
+    print("Shape of data array:", sn, ss)  # Add this line for debugging
+    means = np.mean(data, axis=1)
+    sx = np.linspace(1, sn, sn)
+    ax.plot(sx, means, marker='o')
+    ax.set_ylabel('Sample Mean')
+    ax.set_title('Xbar Chart')
+    canvas.draw()
 
+def plot_r_chart(data, canvas):
+    fig = Figure(figsize=(5, 4), dpi=100)
+    ax = fig.add_subplot(111)
+    sn, ss = np.array(data).shape  # Convert data to numpy array
+    ranges = [np.ptp(row) for row in data]
+    sx = np.linspace(1, sn, sn)
+    sx = sx.astype(int)
+    ax.plot(sx, ranges, marker='o')
+    ax.set_ylabel('Sample Range')
+    ax.set_title('R Chart')
+    canvas.draw()
 
-root = tk.Tk()
-root.title("Number of Values Input")
+def plot_last_subgroups(data, canvas):
+    fig = Figure(figsize=(5, 4), dpi=100)
+    ax = fig.add_subplot(111)
+    sn, ss = np.array(data).shape  # Convert data to numpy array
+    sx = np.linspace(1, sn, sn)
+    sx = sx.astype(int)
+    c = 0
+    while c < sn:
+        for i in data[c, :]:
+            ax.scatter(c + 1, i, color='b', marker='+')
+        c += 1
+        if c == sn:
+            break
+    ax.set_ylabel('Values')
+    ax.set_xlabel('Sample')
+    ax.set_title(f'Last {sn} Subgroups')
+    canvas.draw()
 
+def plot_normal_probability_plot(data, canvas):
+    fig = Figure(figsize=(5, 4), dpi=100)
+    ax = fig.add_subplot(111)
+    flat_data = np.array(data).flatten()  # Convert data to numpy array
+    result = stats.anderson(flat_data, dist='norm')
+    ad = result.statistic
+    sdata = np.sort(flat_data)
+    pr = (np.arange(len(sdata)) + 0.5) / len(sdata)
+    statistic, p = stats.shapiro(data)
+    ax.grid(axis='x', which='major', linestyle='')
+    ax.scatter(sdata, pr, marker='o', facecolors='none', edgecolors='blue')
+    ax.set_title('Normal Probability Plot')
+    ax.grid(True)
+    ax.text(np.max(sdata) + np.std(data) * 5 / 4, .5,
+            f'Mean: {np.round(np.mean(data), 3)} \nStandard Deviation: {np.round(np.std(data), 3)} \nN: {len(data)}\nAD:{np.round(ad, 3)}\nP-Value:{np.round(p, 3)}',
+            fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+    canvas.draw()
 
-ttk.Label(root, text="Enter number of values, N:").pack()
-entry_nvalue = ttk.Entry(root)
-entry_nvalue.pack(pady=10)
+def generate_plots():
+    data = parse_data()
+    if data is None:
+        return
+    usl = float(usl_entry.get())
+    lsl = float(lsl_entry.get())
+    plot_histogram(data, usl, lsl, canvas)
+    plot_xbar_chart(data, canvas)
+    plot_r_chart(data, canvas)
+    plot_last_subgroups(data, canvas)
+    plot_normal_probability_plot(data, canvas)
 
+def parse_data():
+    try:
+        data_text = data_entry.get("1.0", tk.END)
+        data = [float(x) for x in data_text.split()]
+        return data
+    except ValueError:
+        tk.messagebox.showerror("Error", "Invalid data format. Please enter numeric values only.")
+        return None
 
+window = tk.Tk()
+window.title("Statistical Process Control")
 
+label = tk.Label(window, text="Paste your data here:")
+label.pack()
 
+data_entry = tk.Text(window, height=10, width=50)
+data_entry.pack()
 
-ttk.Label(root, text="Enter Upper Specification Limit, USL:").pack()
-entry_usl = ttk.Entry(root)
-entry_usl.pack(pady=10)
+label = tk.Label(window, text="Upper Specification Limit (USL):")
+label.pack()
 
+usl_entry = tk.Entry(window)
+usl_entry.pack()
 
+label = tk.Label(window, text="Lower Specification Limit (LSL):")
+label.pack()
 
-ttk.Label(root, text="Enter Lower Specification Limit, LSL:").pack()
-entry_lsl = ttk.Entry(root)
-entry_lsl.pack(pady=10)
+lsl_entry = tk.Entry(window)
+lsl_entry.pack()
 
-get_lsl_button = ttk.Button(root, text="Continue", command=get_nvalue)
-get_lsl_button.pack()
+button = tk.Button(window, text="Generate Plots", command=generate_plots)
+button.pack()
 
-root.mainloop()
+canvas = FigureCanvasTkAgg(Figure(figsize=(5, 4), dpi=100), master=window)
+canvas.get_tk_widget().pack()
 
-
+window.mainloop()
