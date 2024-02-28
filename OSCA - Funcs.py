@@ -46,7 +46,7 @@ data = np.array([
 
 # Define the desired range
 lower_bound = 4.9
-upper_bound = 5.34
+upper_bound = 5.35
 
 # Calculate the mean and standard deviation of the range
 mean_range = (upper_bound + lower_bound) / 2
@@ -54,7 +54,7 @@ std_range = (upper_bound - lower_bound) / 6  # Using 6 standard deviations to co
 
 # Generate data
 #data = np.random.normal(loc=mean_range, scale=std_range, size=(20, 5))
-data = np.random.uniform(low=lower_bound, high=upper_bound, size=(20, 5))
+# = np.random.uniform(low=lower_bound, high=upper_bound, size=(20, 5))
 #norm prob data
 #upper control limit
 #lower limit
@@ -266,6 +266,7 @@ def osca(data,ucl,lcl):
     cp=(ucl-lcl)/(6*wsigma)
     cpk=np.min([(ucl-mu),(mu-lcl)])/(3*wsigma)
     dp=0
+    sigma=np.std(data)
     for i in flatdata:
         if i < lcl or i > ucl:
             dp+=1
@@ -278,14 +279,16 @@ def osca(data,ucl,lcl):
         ppk=(ucl-mu)/(3*sigma)
     fig, axs = plt.subplots(3, 2, figsize=(10, 10))
     axs[0,0].plot(xhist, phist, 'k', linewidth=2)
-    axs[0,0].set_xlabel('Value')
-    axs[0,0].set_ylabel('Frequency')
+    axs[0,0].set_xlabel('Value',fontsize=12)
+    axs[0,0].set_ylabel('Frequency',fontsize=12)
     axs[0,0].axvline(x=ucl,color='r')
     axs[0,0].axvline(x=lcl,color='r')
     axs[0,0].hist(flatdata,bins=12,edgecolor='black',color='blue')
-    axs[0,0].set_title('Capability Histogram',fontsize=14)
-    axs[0, 0].text(lcl+sigma/6, np.max(flatdata)*2.5, 'LCL', fontsize=12, color='red')
-    axs[0, 0].text(ucl+sigma/6, np.max(flatdata)*2.5, 'UCL', fontsize=12, color='red')
+    axs[0,0].set_title('Capability Histogram',fontsize=14, y=1.1)
+    max_y_value = np.max(np.histogram(flatdata, bins=12)[0])
+
+    axs[0, 0].text(ucl, max_y_value * 1.1, 'UCL', fontsize=12, color='red', ha='center')
+    axs[0, 0].text(lcl, max_y_value * 1.1, 'LCL', fontsize=12, color='red', ha='center')
     plt.subplots_adjust(hspace=0.5, wspace=0.5)
     axs[2, 1].axis('off')
     
@@ -307,7 +310,7 @@ def osca(data,ucl,lcl):
     
     
     axs[1,1].plot(sx,ranges,marker='o')
-    axs[1,1].set_ylim(-.01,np.max(ranges)+sigmam)
+    axs[1,1].set_ylim(-.01,rbarr+3.5*sigmam)
     axs[1,1].set_xticks(sx.astype(int),sx.astype(int))
     xmin = min(sx.astype(int))
     xmax = max(sx.astype(int))
@@ -360,17 +363,17 @@ def osca(data,ucl,lcl):
     axs[2,0].plot(sdata,lrdata,color='r',alpha=.5)
     axs[2,0].scatter(sdata, pr,marker='o',facecolors='none',edgecolors='blue')
     axs[2,0].set_yticks([])
-    axs[2,0].set_title('Normal Probability Plot')
+    axs[2,0].set_title('Normal Probability Plot',fontsize=14)
     axs[2,0].grid(True)
 
-    axs[2,0].text(np.max(sdata)+sigma*5/4, .35, f'Mean: {np.round(np.mean(data),3)} \nStandard Dev: {np.round(np.std(data),3)} \nN: {np.size(data)}\nAD:{np.round(ad,3)}\nP-Value:{np.round(p,3)}', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+    axs[2,0].text(np.max(sdata)+sigma*.75, .35, f'Mean: {np.round(np.mean(data),3)} \nStandard Dev: {np.round(np.std(data),3)} \nN: {np.size(data)}\nAD:{np.round(ad,3)}\nP-Value:{np.round(p,3)}', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
     
     
 
     
     
     
-    axs[0, 0].text(-.25, 1.4, 'Open Source Capability Analysis (OSCA) Report',transform=axs[0, 0].transAxes, ha='left', va='center', fontsize=20,fontstyle='italic')
+    axs[0, 0].text(-.25, 1.4, 'Open Source Capability Analysis (OSCA) Report',transform=axs[0, 0].transAxes, ha='left', va='center', fontsize=20)
 
 
     
